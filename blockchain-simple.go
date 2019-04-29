@@ -119,7 +119,7 @@ func init() {
     log.SetFlags(log.Lshortfile)
 
     log.Printf("Welcome to Sumanta's Supply Chain Dashboard Server!")
-    listenPort = flag.Int("port", 8080, "mux server listen port")
+    listenPort = flag.Int("port", 8085, "mux server listen port")
     totalLocs = flag.Int("locs", 6, "total locations in supply chain")
     pdtsDir = flag.String("pdts", "pdts", "pathname of product data directory")
     accsDir = flag.String("accs", "accs", "pathname of accounts data directory")
