@@ -1,1 +1,1 @@
-web: blockchain-tank-heroku
+web: blockchain-simple
