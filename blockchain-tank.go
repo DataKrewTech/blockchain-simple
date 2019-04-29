@@ -14,8 +14,10 @@ package main
 
 import (
 	// "fmt"
+	"crypto/sha256"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"runtime"
 
@@ -33,11 +35,12 @@ import (
 	// "io/ioutil"
 	// "encoding/hex"
 	"encoding/gob"
+	"encoding/hex"
 	"encoding/json"
 
-	// "encoding/json"
 	// "crypto/sha256"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 	// "github.com/davecgh/go-spew/spew"
 )
@@ -119,7 +122,7 @@ func makeMUXRouter() http.Handler { // create handlers
 	muxRouter := mux.NewRouter()
 	muxRouter.HandleFunc("/", handleHome).Methods("GET")
 	muxRouter.HandleFunc("/post/{Temperature}/{Humidity}/{Sound}/{Gas}/{PIR}", handlePost).Methods("GET")
-
+	muxRouter.HandleFunc("/blockchain", handleBlockchain).Methods("GET")
 	return muxRouter
 }
 
@@ -215,4 +218,71 @@ func readGob(object interface{}, filePath string) error {
 	}
 	file.Close()
 	return err
+}
+
+func handleBlockchain(w http.ResponseWriter, r *http.Request) {
+	genesisBlock := Block{
+		Index:     0,
+		Timestamp: StartTime.Add(time.Duration(genRandInt(30000, 0)) * time.Second).Format("02-01-2006 15:04:05 Mon"),
+		PrevHash:  "GENESIS-BLOCK",
+	}
+	genesisBlock.ThisHash = calculateHash(genesisBlock)
+	Blockchain = append(Blockchain, genesisBlock)
+
+	files, err := ioutil.ReadDir(*dataDir) // dataDir from flag
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	mostRecectFileNo := 0
+	for _, file := range files {
+		fileNo, _ := strconv.Atoi(file.Name()[len("IoT-data")+1 : len(file.Name())-4])
+		if fileNo > mostRecectFileNo {
+			mostRecectFileNo = fileNo
+		}
+	}
+
+	var TempIoTDataArray []IoTDataPoint
+
+	for i := 1; i <= mostRecectFileNo; i++ {
+		readFilePath := *dataDir + "/IoT-data-" + strconv.Itoa(i) + ".gob"
+		gobCheck(readGob(&TempIoTDataArray, readFilePath))
+		b := Block{
+			Index:             i,
+			Timestamp:         StartTime.AddDate(0, 0, genRandInt(3, 1)+(3*i)).Add(time.Duration(genRandInt(30000, 0)) * time.Second).Format("02-01-2006 15:04:05 Mon"), // random date increment
+			IoTDataPointEntry: TempIoTDataArray,
+			PrevHash:          Blockchain[len(Blockchain)-1].ThisHash,
+		}
+		b.ThisHash = calculateHash(b)
+		Blockchain = append(Blockchain, b)
+	}
+
+	respondWithJSON(w, r, http.StatusCreated, Blockchain)
+}
+
+// SHA256 hashing
+func calculateHash(b Block) string {
+	record := strconv.Itoa(b.Index) + b.Timestamp + spew.Sdump(b.IoTDataPointEntry) + b.PrevHash
+	h := sha256.New()
+	h.Write([]byte(record))
+	hashed := h.Sum(nil)
+	return hex.EncodeToString(hashed)
+}
+
+func genRandString(n int) string { // generate Random String of length 'n'
+	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	val := make([]rune, n)
+	for i := range val {
+		myRandSource := rand.NewSource(time.Now().UnixNano())
+		myRand := rand.New(myRandSource)
+		val[i] = letterRunes[myRand.Intn(len(letterRunes))]
+	}
+	return string(val)
+}
+
+func genRandInt(n int, offset int) int { // generate Random Integer less than 'n' with an offset
+	myRandSource := rand.NewSource(time.Now().UnixNano())
+	myRand := rand.New(myRandSource)
+	val := myRand.Intn(n) + offset
+	return val
 }
