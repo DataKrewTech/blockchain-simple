@@ -221,6 +221,7 @@ func readGob(object interface{}, filePath string) error {
 }
 
 func handleBlockchain(w http.ResponseWriter, r *http.Request) {
+	Blockchain = []Block{}
 	genesisBlock := Block{
 		Index:     0,
 		Timestamp: StartTime.Add(time.Duration(genRandInt(30000, 0)) * time.Second).Format("02-01-2006 15:04:05 Mon"),
