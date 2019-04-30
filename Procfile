@@ -1,1 +1,1 @@
-web: blockchain-tank
+web: blockchain-simple
