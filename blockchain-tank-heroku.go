@@ -131,11 +131,11 @@ func main() {
 
 func launchMUXServer() error { // launch MUX server
 	mux := makeMUXRouter()
-	// log.Println("HTTP Server Listening on port:", *listenPort) // listenPort is a global flag
-	log.Println("HTTP MUX server listening on " + GetMyIP() + ":" + os.Getenv("PORT")) // listenPort is a global const
+	log.Println("HTTP Server Listening on port:", *listenPort) // listenPort is a global flag
+	// log.Println("HTTP MUX server listening on " + GetMyIP() + ":" + os.Getenv("PORT")) // listenPort is a global const
 	s := &http.Server{
-		// Addr:           ":" + strconv.Itoa(*listenPort),
-		Addr:           ":" + os.Getenv("PORT"),
+		Addr:           ":" + strconv.Itoa(*listenPort),
+		// Addr:           ":" + os.Getenv("PORT"),
 		Handler:        mux,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
