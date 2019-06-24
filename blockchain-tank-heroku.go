@@ -56,13 +56,38 @@ var StartTime time.Time
 var listenPort, totalLocs *int // listen port & total locations in the supply chain
 var dataDir *string            // pathname of data directory to save IoT Data
 
+type Accelerometer struct {
+	Ax string `json:"ax"`
+	Ay string `json:"ay"`
+	Az string `json:"az"`
+}
+
+type Gyroscope struct {
+	Gx string `json:"gx"`
+	Gy string `json:"gy"`
+	Gz string `json:"gz"`
+}
+
+type Temperature struct {
+	Tempr string `json:"Tempr"`
+}
+
+type Humidity struct {
+	Humd string `json:"Humd"`
+}
+
+type Sensor struct {
+	Dummy string `json:"Dummy"`
+	Accelerometer_Data Accelerometer `json:"Accelerometer"`
+	Gyroscope_Data Gyroscope `json:"Gyroscope"`
+	Temperature_Data Temperature `json:"Temperature"`
+	Humidity_Data Humidity `json:"Humidity"`
+}
+
 type IoTDataPoint struct {
-	Temperature string `json:"Temperature"`
-	Humidity    string `json:"Humidity"`
-	Sound       string `json:"Sound"`
-	Gas         string `json:"Gas"`
-	PIR         string `json:"PIR"`
-	SerialNo    int
+	Device_ID string
+	Timestamp string
+	Sensor_Data Sensor `json:"Sensor"`
 }
 
 var IoTDataArray []IoTDataPoint // To be saved as gob file
@@ -138,23 +163,23 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "You have entered the restricted zone. Trespassing is strictly prohibited. Defaulters will be reported.")
 }
 
-func handlePost_old(w http.ResponseWriter, r *http.Request) {
+// func handlePost_old(w http.ResponseWriter, r *http.Request) {
 
-	params := mux.Vars(r)
+// 	params := mux.Vars(r)
 
-	newPoint := IoTDataPoint{}
-	newPoint.SerialNo = len(IoTDataArray) + 1
-	newPoint.Temperature = params["Temperature"]
-	newPoint.Humidity = params["Humidity"]
-	newPoint.Sound = params["Sound"]
-	newPoint.Gas = params["Gas"]
-	newPoint.PIR = params["PIR"]
+// 	newPoint := IoTDataPoint{}
+// 	newPoint.SerialNo = len(IoTDataArray) + 1
+// 	newPoint.Temperature = params["Temperature"]
+// 	newPoint.Humidity = params["Humidity"]
+// 	newPoint.Sound = params["Sound"]
+// 	newPoint.Gas = params["Gas"]
+// 	newPoint.PIR = params["PIR"]
 
-	fmt.Println("Adding to SensorData:", newPoint)
-	IoTDataArray = append(IoTDataArray, newPoint)
-	gobCheck(writeIoTGob(IoTDataArray, len(IoTDataArray)))
-	respondWithJSON(w, r, http.StatusCreated, newPoint)
-}
+// 	fmt.Println("Adding to SensorData:", newPoint)
+// 	IoTDataArray = append(IoTDataArray, newPoint)
+// 	gobCheck(writeIoTGob(IoTDataArray, len(IoTDataArray)))
+// 	respondWithJSON(w, r, http.StatusCreated, newPoint)
+// }
 
 func handlePost_new(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/json")
