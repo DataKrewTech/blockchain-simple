@@ -27,6 +27,9 @@ import (
 	"log"
 	"time"
 
+	"bytes"
+	"strings"
+
 	// "math"
 	"strconv"
 	// "runtime"
@@ -103,11 +106,11 @@ func main() {
 
 func launchMUXServer() error { // launch MUX server
 	mux := makeMUXRouter()
-	// log.Println("HTTP Server Listening on port:", *listenPort) // listenPort is a global flag
-	log.Println("HTTP MUX server listening on " + GetMyIP() + ":" + os.Getenv("PORT")) // listenPort is a global const
+	log.Println("HTTP Server Listening on port:", *listenPort) // listenPort is a global flag
+	// log.Println("HTTP MUX server listening on " + GetMyIP() + ":" + os.Getenv("PORT")) // listenPort is a global const
 	s := &http.Server{
-		// Addr:           ":" + strconv.Itoa(*listenPort),
-		Addr:           ":" + os.Getenv("PORT"),
+		Addr:           ":" + strconv.Itoa(*listenPort),
+		// Addr:           ":" + os.Getenv("PORT"),
 		Handler:        mux,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
@@ -124,7 +127,8 @@ func launchMUXServer() error { // launch MUX server
 func makeMUXRouter() http.Handler { // create handlers
 	muxRouter := mux.NewRouter()
 	muxRouter.HandleFunc("/", handleHome).Methods("GET")
-	muxRouter.HandleFunc("/post/{Temperature}/{Humidity}/{Sound}/{Gas}/{PIR}", handlePost).Methods("GET")
+	// muxRouter.HandleFunc("/post/{Temperature}/{Humidity}/{Sound}/{Gas}/{PIR}", handlePost_old).Methods("GET")
+	muxRouter.HandleFunc("/post", handlePost_new).Methods("POST")
 	muxRouter.HandleFunc("/blockchain", handleBlockchain).Methods("GET")
 	return muxRouter
 }
@@ -134,7 +138,7 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "You have entered the restricted zone. Trespassing is strictly prohibited. Defaulters will be reported.")
 }
 
-func handlePost(w http.ResponseWriter, r *http.Request) {
+func handlePost_old(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 
@@ -145,6 +149,29 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 	newPoint.Sound = params["Sound"]
 	newPoint.Gas = params["Gas"]
 	newPoint.PIR = params["PIR"]
+
+	fmt.Println("Adding to SensorData:", newPoint)
+	IoTDataArray = append(IoTDataArray, newPoint)
+	gobCheck(writeIoTGob(IoTDataArray, len(IoTDataArray)))
+	respondWithJSON(w, r, http.StatusCreated, newPoint)
+}
+
+func handlePost_new(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+    var newPoint IoTDataPoint
+
+    buf := new(bytes.Buffer)
+    buf.ReadFrom(r.Body)
+    newStr := buf.String()
+    
+    fmt.Println(newStr)
+    decoder := json.NewDecoder(strings.NewReader(newStr))
+    if err := decoder.Decode(&newPoint); err != nil {
+        respondWithJSON(w, r, http.StatusBadRequest, r.Body)
+        panic(err)
+        return
+    }
+    defer r.Body.Close()
 
 	fmt.Println("Adding to SensorData:", newPoint)
 	IoTDataArray = append(IoTDataArray, newPoint)
