@@ -174,6 +174,7 @@ func makeMUXRouter() http.Handler { // create handlers
 	muxRouter.HandleFunc("/post", handlePost_new).Methods("POST")
 	muxRouter.HandleFunc("/blockchain", handleBlockchain).Methods("GET")
 	muxRouter.HandleFunc("/blocklist", handleBlockList).Methods("GET")
+	muxRouter.HandleFunc("/blockinfo/{Index}", handleBlockInfo).Methods("GET")
 	return muxRouter
 }
 
@@ -316,6 +317,17 @@ func handleBlockList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, r, http.StatusCreated, BlockList)
+}
+
+func handleBlockInfo(w http.ResponseWriter, r *http.Request) {
+	
+	PrepareBlockchain()
+
+	params := mux.Vars(r)
+	InfoIndex, _ := strconv.Atoi(params["Index"])
+	InfoBlock := Blockchain[InfoIndex]
+
+	respondWithJSON(w, r, http.StatusCreated, InfoBlock)
 }
 
 func PrepareBlockchain() {
