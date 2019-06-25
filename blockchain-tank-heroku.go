@@ -91,13 +91,14 @@ type IoTDataPoint struct {
 }
 
 var IoTDataArray []IoTDataPoint // To be saved as gob file
+var IoTDataElement IoTDataPoint // To be saved as gob file (new version)
 
 /////
 
 type Block struct { // An element of Blockchain
 	Index             int
 	Timestamp         string
-	IoTDataPointEntry []IoTDataPoint
+	IoTDataPointEntry IoTDataPoint
 	PrevHash          string
 	ThisHash          string
 }
@@ -114,7 +115,7 @@ func init() {
 
 	log.SetFlags(log.Lshortfile)
 
-	log.Printf("Welcome to Sumanta's IoT Dashboard Server!")
+	log.Printf("Welcome to DataKrew ProvDAT IoT Dashboard Server!")
 	listenPort = flag.Int("port", 8085, "mux server listen port")
 	dataDir = flag.String("dataDir", "data", "pathname of data directory to save IoT Data")
 	flag.Parse()
@@ -129,9 +130,9 @@ func init() {
 	genesisBlock := Block{
 		Index:     0,
 		Timestamp: StartTime.Add(time.Duration(genRandInt(30000, 0)) * time.Second).Format("02-01-2006 15:04:05 Mon"),
-		PrevHash:  "GENESIS-BLOCK",
+		PrevHash:  "NULL",
 	}
-	genesisBlock.ThisHash = calculateHash(genesisBlock)
+	genesisBlock.ThisHash = "GENESIS-BLOCK"; // calculateHash(genesisBlock)
 	Blockchain = append(Blockchain, genesisBlock)
 
 	/////
@@ -212,7 +213,8 @@ func handlePost_new(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("Adding to SensorData:", newPoint)
 	IoTDataArray = append(IoTDataArray, newPoint)
-	gobCheck(writeIoTGob(IoTDataArray, len(IoTDataArray)))
+	// gobCheck(writeIoTGob(IoTDataArray, len(IoTDataArray)))
+	gobCheck(writeIoTGob(newPoint, len(IoTDataArray)))
 	respondWithJSON(w, r, http.StatusCreated, newPoint)
 }
 
@@ -273,7 +275,8 @@ func LoadIoTData() { // load from existing files, if any
 	} else {
 		mostRecentFile := *dataDir + "/IoT-data-" + strconv.Itoa(mostRecectFileNo) + ".gob"
 		log.Println("Loading existing IoTData from", mostRecentFile)
-		gobCheck(readGob(&IoTDataArray, mostRecentFile))
+		// gobCheck(readGob(&IoTDataArray, mostRecentFile))
+		gobCheck(readGob(&IoTDataElement, mostRecentFile))
 	}
 }
 
@@ -302,21 +305,27 @@ func handleBlockchain(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Println(mostRecectFileNo)
+	log.Println("len(Blockchain) = ", len(Blockchain))
+	log.Println("mostRecectFileNo = ", mostRecectFileNo)
 
-	var TempIoTDataArray []IoTDataPoint
+	if (len(Blockchain) - 1 < mostRecectFileNo) {
 
-	for i := 1; i <= mostRecectFileNo; i++ {
-		readFilePath := *dataDir + "/IoT-data-" + strconv.Itoa(i) + ".gob"
-		gobCheck(readGob(&TempIoTDataArray, readFilePath))
-		b := Block{
-			Index:             i,
-			Timestamp:         StartTime.AddDate(0, 0, genRandInt(3, 1)+(3*i)).Add(time.Duration(genRandInt(30000, 0)) * time.Second).Format("02-01-2006 15:04:05 Mon"), // random date increment
-			IoTDataPointEntry: TempIoTDataArray,
-			PrevHash:          Blockchain[len(Blockchain)-1].ThisHash,
+		var TempIoTDataElement IoTDataPoint
+
+		for i := len(Blockchain); i <= mostRecectFileNo; i++ {
+			readFilePath := *dataDir + "/IoT-data-" + strconv.Itoa(i) + ".gob"
+			gobCheck(readGob(&TempIoTDataElement, readFilePath))
+			b := Block{
+				Index:             i,
+				Timestamp:         StartTime.AddDate(0, 0, genRandInt(3, 1)+(3*i)).Add(time.Duration(genRandInt(30000, 0)) * time.Second).Format("02-01-2006 15:04:05 Mon"), // random date increment
+				IoTDataPointEntry: TempIoTDataElement,
+				PrevHash:          Blockchain[len(Blockchain)-1].ThisHash,
+			}
+			b.ThisHash = calculateHash(b)
+			Blockchain = append(Blockchain, b)
 		}
-		b.ThisHash = calculateHash(b)
-		Blockchain = append(Blockchain, b)
+
+		log.Println("len(Blockchain) = ", len(Blockchain))
 	}
 
 	respondWithJSON(w, r, http.StatusCreated, Blockchain)
