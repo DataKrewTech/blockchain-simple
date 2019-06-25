@@ -1,9 +1,13 @@
 /* README
 
-Written by Sumanta Bose, 29 Apr 2018
+Written by Sumanta Bose, 25 June 2019
 
 MUX server methods available are:
     http://localhost:port/
+    http://localhost:port/post
+    http://localhost:port/blocklist
+    http://localhost:port/blockinfo/{Index}
+    http://localhost:port/blockchain
 
 FLAGS are:
   -port int
@@ -320,7 +324,7 @@ func handleBlockList(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleBlockInfo(w http.ResponseWriter, r *http.Request) {
-	
+
 	PrepareBlockchain()
 
 	params := mux.Vars(r)
