@@ -103,6 +103,11 @@ type Block struct { // An element of Blockchain
 	ThisHash          string
 }
 
+type BlockMetaData struct {
+	Index		int
+	ThisHash 	string
+}
+
 var Blockchain []Block
 
 ///// LIST OF FUNCTIONS
@@ -168,6 +173,7 @@ func makeMUXRouter() http.Handler { // create handlers
 	// muxRouter.HandleFunc("/post/{Temperature}/{Humidity}/{Sound}/{Gas}/{PIR}", handlePost_old).Methods("GET")
 	muxRouter.HandleFunc("/post", handlePost_new).Methods("POST")
 	muxRouter.HandleFunc("/blockchain", handleBlockchain).Methods("GET")
+	muxRouter.HandleFunc("/blocklist", handleBlockList).Methods("GET")
 	return muxRouter
 }
 
@@ -329,6 +335,57 @@ func handleBlockchain(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, r, http.StatusCreated, Blockchain)
+}
+
+func handleBlockList(w http.ResponseWriter, r *http.Request) {
+
+	files, err := ioutil.ReadDir(*dataDir) // dataDir from flag
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	mostRecectFileNo := 0
+	for _, file := range files {
+		fileNo, _ := strconv.Atoi(file.Name()[len("IoT-data")+1 : len(file.Name())-4])
+		if fileNo > mostRecectFileNo {
+			mostRecectFileNo = fileNo
+		}
+	}
+
+	log.Println("len(Blockchain) = ", len(Blockchain))
+	log.Println("mostRecectFileNo = ", mostRecectFileNo)
+
+	if (len(Blockchain) - 1 < mostRecectFileNo) {
+
+		var TempIoTDataElement IoTDataPoint
+
+		for i := len(Blockchain); i <= mostRecectFileNo; i++ {
+			readFilePath := *dataDir + "/IoT-data-" + strconv.Itoa(i) + ".gob"
+			gobCheck(readGob(&TempIoTDataElement, readFilePath))
+			b := Block{
+				Index:             i,
+				Timestamp:         StartTime.AddDate(0, 0, genRandInt(3, 1)+(3*i)).Add(time.Duration(genRandInt(30000, 0)) * time.Second).Format("02-01-2006 15:04:05 Mon"), // random date increment
+				IoTDataPointEntry: TempIoTDataElement,
+				PrevHash:          Blockchain[len(Blockchain)-1].ThisHash,
+			}
+			b.ThisHash = calculateHash(b)
+			Blockchain = append(Blockchain, b)
+		}
+
+		log.Println("len(Blockchain) = ", len(Blockchain))
+	}
+
+	var BlockList []BlockMetaData
+
+	for j := 0 ; j < len(Blockchain) ; j++ {
+		bmd := BlockMetaData{
+			Index: Blockchain[j].Index,
+			ThisHash: Blockchain[j].ThisHash,
+		}
+		BlockList = append (BlockList, bmd)
+	}
+
+	respondWithJSON(w, r, http.StatusCreated, BlockList)
 }
 
 // SHA256 hashing
