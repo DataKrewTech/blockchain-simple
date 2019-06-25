@@ -123,6 +123,18 @@ func init() {
 
 	StartTime = time.Now()
 	StartTime = StartTime.AddDate(0, -6, 10) // random negative offset
+
+	/////
+
+	genesisBlock := Block{
+		Index:     0,
+		Timestamp: StartTime.Add(time.Duration(genRandInt(30000, 0)) * time.Second).Format("02-01-2006 15:04:05 Mon"),
+		PrevHash:  "GENESIS-BLOCK",
+	}
+	genesisBlock.ThisHash = calculateHash(genesisBlock)
+	Blockchain = append(Blockchain, genesisBlock)
+
+	/////
 }
 
 func main() {
@@ -276,13 +288,6 @@ func readGob(object interface{}, filePath string) error {
 }
 
 func handleBlockchain(w http.ResponseWriter, r *http.Request) {
-	genesisBlock := Block{
-		Index:     0,
-		Timestamp: StartTime.Add(time.Duration(genRandInt(30000, 0)) * time.Second).Format("02-01-2006 15:04:05 Mon"),
-		PrevHash:  "GENESIS-BLOCK",
-	}
-	genesisBlock.ThisHash = calculateHash(genesisBlock)
-	Blockchain = append(Blockchain, genesisBlock)
 
 	files, err := ioutil.ReadDir(*dataDir) // dataDir from flag
 	if err != nil {
@@ -296,6 +301,8 @@ func handleBlockchain(w http.ResponseWriter, r *http.Request) {
 			mostRecectFileNo = fileNo
 		}
 	}
+
+	log.Println(mostRecectFileNo)
 
 	var TempIoTDataArray []IoTDataPoint
 
