@@ -1,28 +1,20 @@
 {
-<<<<<<< HEAD
-	"ImportPath": ".",
-=======
-	"ImportPath": "blockchain-simple",
->>>>>>> 4a81abe5e3e94bda4793ea3ae50154310dca15a0
-	"GoVersion": "go1.11",
+	"ImportPath": "innovfest19-bl",
+	"GoVersion": "go1.10",
 	"GodepVersion": "v80",
 	"Packages": [
 		"./..."
 	],
-<<<<<<< HEAD
-	"Deps": []
-=======
 	"Deps": [
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
-			"Comment": "v1.1.1-1-gd8f796a",
-			"Rev": "d8f796af33cc11cb798c1aaeb27a4ebc5099927d"
+			"Comment": "v1.1.0-12-g8991bc2",
+			"Rev": "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
 		},
 		{
 			"ImportPath": "github.com/gorilla/mux",
-			"Comment": "v1.7.1",
-			"Rev": "c5c6c98bc25355028a63748a498942a6398ccd22"
+			"Comment": "v1.6.1-10-gc0091a0",
+			"Rev": "c0091a029979286890368b4c7b301261e448e242"
 		}
 	]
->>>>>>> 4a81abe5e3e94bda4793ea3ae50154310dca15a0
 }
