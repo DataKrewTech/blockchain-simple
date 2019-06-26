@@ -80,12 +80,17 @@ type Humidity struct {
 	Humd string `json:"hum"`
 }
 
+type Light struct {
+	Lum string `json:"lum"`
+}
+
 type Sensor struct {
-	Dummy string `json:"Dummy"`
+	// Dummy string `json:"Dummy"`
 	Accelerometer_Data Accelerometer `json:"Accelerometer"`
 	Gyroscope_Data Gyroscope `json:"Gyroscope"`
 	Temperature_Data Temperature `json:"Temperature"`
 	Humidity_Data Humidity `json:"Humidity"`
+	Light_Data Light `json:"Light"`
 }
 
 type IoTDataPoint struct {
