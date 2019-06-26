@@ -73,11 +73,11 @@ type Gyroscope struct {
 }
 
 type Temperature struct {
-	Tempr string `json:"Tempr"`
+	Tempr string `json:"temp"`
 }
 
 type Humidity struct {
-	Humd string `json:"Humd"`
+	Humd string `json:"hum"`
 }
 
 type Sensor struct {
